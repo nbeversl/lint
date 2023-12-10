@@ -18,3 +18,17 @@ Example:
 ### Other Implementations
 
 `UrtextProjectList.current_project.extensions['LINT'].run([filename])`
+
+## Settings:
+
+Add a `_lint` key to a `project_settings` node, with a node as the value. 
+- `run_when_file_modified` : If true ("true", "yes", "y"), will run lint after saving/modifiying any file. Default: false.
+- `space_between_nodes` : A number. Sets the number of spaces between nested ndoes. Default: 1
+
+**Example:**
+
+	project_settings _
+	_lint::{ 
+		run_when_file_modified::true
+		space_between_nodes::1
+	}
