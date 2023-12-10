@@ -32,8 +32,11 @@ class UrtextLint:
 			self._get_settings() # in case buffer is project_settings
 			if not buffer:
 				return
+
+			# calculate params for every range of the file
 			mapped_ranges = {}
 			for node in buffer.nodes:
+				whitespace = 0
 				for r in node.ranges:
 					if node.nested > 0 and not node.is_meta:
 						if r == node.ranges[0]: # first range
@@ -59,31 +62,40 @@ class UrtextLint:
 						'is_meta' : node.is_meta,
 						'end' : r == node.ranges[-1] and (node.nested > 0)
 					}
+
+			# rewrite the contents
 			new_contents = []
 			range_start_positions = sorted(list(mapped_ranges.keys()))
 			for position in range_start_positions:
 				r = mapped_ranges[position]
-				if not r['is_meta']:
+				if not r['is_meta']: # TODO implement meta nodes
 					range_contents = contents[r['range'][0]:r['range'][1]]
 					range_lines = [l.strip() for l in range_contents.split('\n')]
 					if range_lines:
-						whitespace = '\t' * r['nested']
-						whitespace += ' ' * r['whitespace']
-						whitespace_index = 0
-						if r['start'] or r['end']:
-							spaces = 1
+						tabs = '\t' * r['nested']
+						whitespace = ' ' * r['whitespace']
+						whitespace_start_index = 0
+						if r['start']:
+							spaces_between_nodes = 1
 							if self.settings:
 								spaces = self.settings.get_first_value(
 									'space_between_nodes')
-								if spaces:
-									spaces = int(spaces.num())
+								if spaces_between_nodes:
+									spaces_between_nodes = int(spaces_between_nodes)
 								else: 
-									spaces = 1
-							range_lines[0] = '\t' * r['nested'] + range_lines[0]
-							whitespace_index = 1
+									spaces_between_nodes = 1
+							range_lines[0] = '\n\t' * r['nested'] + range_lines[0]
+							whitespace_start_index = 1
 						if len(range_lines) > 1:
-							range_lines[whitespace_index:] = [
-								whitespace + l for l in range_lines[whitespace_index:]]
+							for index, line in enumerate(range_lines):
+								if index >= whitespace_start_index:
+									range_lines[index]
+									if not range_lines[index].strip():
+										range_lines[index] = range_lines[index].strip()
+									elif range_lines[index].strip() in ['{','}']:
+										range_lines[index] = tabs + range_lines[index]
+									else:
+										range_lines[index] = tabs + whitespace + range_lines[index]
 					new_contents.append('\n'.join(range_lines))
 				else:
 					new_contents.append(
