@@ -17,4 +17,4 @@ Example:
 
 ### Other Implementations
 
-`UrtextProjectList.current_project.extensions['LINT'].run([filename])
+`UrtextProjectList.current_project.extensions['LINT'].run([filename])`
