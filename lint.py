@@ -75,16 +75,16 @@ class UrtextLint:
 						tabs = '\t' * r['nested']
 						whitespace = ' ' * r['whitespace']
 						whitespace_start_index = 0
-						if r['start']:
+						if r['start']: # first range
 							spaces_between_nodes = 1
 							if self.settings:
-								spaces = self.settings.get_first_value(
+								spaces_setting = self.settings.get_first_value(
 									'space_between_nodes')
-								if spaces_between_nodes:
-									spaces_between_nodes = int(spaces_between_nodes)
+								if spaces_setting:
+									spaces_between_nodes = int(spaces_setting.num())
 								else: 
 									spaces_between_nodes = 1
-							range_lines[0] = '\n\t' * r['nested'] + range_lines[0]
+							range_lines[0] = ('\n' * spaces_between_nodes) + '\t' * r['nested'] + range_lines[0]
 							whitespace_start_index = 1
 						if len(range_lines) > 1:
 							for index, line in enumerate(range_lines):
