@@ -19,7 +19,11 @@ class UrtextLint:
 								r[0] = r[0] - 2 
 							else:
 								r[0] = r[0] - 1
-							whitespace = (len(contents[r[0]+1:r[1]]) - len(contents[r[0]+1:r[1]].lstrip())) + 1
+							first_line = contents[r[0]+1:r[1]].split('\n')[0]
+							if first_line.strip():
+								whitespace = (len(first_line) - len(first_line.lstrip())) + 1
+							else:
+								whitespaces = 0
 						if r == node.ranges[-1]: # last range
 							if not node.compact:
 								r[1] = r[1] + 1
@@ -47,7 +51,6 @@ class UrtextLint:
 					if len(range_lines) > 1:
 						range_lines[whitespace_index:] = [whitespace + l for l in range_lines[whitespace_index:]]
 					new_contents.extend(range_lines)
-				# print([whitespace + l for l in range_lines])
 			new_contents = '\n'.join(new_contents)
 			buffer._set_contents(new_contents)
 
