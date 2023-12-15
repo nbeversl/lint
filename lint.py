@@ -38,8 +38,8 @@ class UrtextLint:
 			self._get_settings() # in case buffer is a project_settings node
 			mapped_ranges = {}
 			for node in buffer.nodes:
+				whitespace = 0
 				for r in node.ranges:
-					whitespace = 0
 					if node.nested > 0 and not node.is_meta:
 						if r == node.ranges[0]: # first range
 							if node.compact:
@@ -60,6 +60,13 @@ class UrtextLint:
 						'end' : r == node.ranges[-1] and (node.nested > 0)
 					}
 
+			# get settings
+			spaces_between_nodes = 1
+			if self.settings:
+				spaces_setting = self.settings.get_first_value('space_between_nodes')
+				if spaces_setting:
+					spaces_between_nodes = int(spaces_setting.num())
+
 			# rewrite the contents
 			new_contents = []
 			range_start_positions = sorted(list(mapped_ranges.keys()))
@@ -73,23 +80,17 @@ class UrtextLint:
 						whitespace = ' ' * r['whitespace']
 						whitespace_start_index = 0
 						if r['start']: # first range
-							spaces_between_nodes = 1
-							if self.settings:
-								spaces_setting = self.settings.get_first_value('space_between_nodes')
-								if spaces_setting:
-									spaces_between_nodes = int(spaces_setting.num())
 							range_lines[0] = ('\n' * (spaces_between_nodes + 1)) + '\t' * r['nested'] + range_lines[0]
 							whitespace_start_index = 1
 						if len(range_lines) > 1:
 							for index, line in enumerate(range_lines):
 								if index >= whitespace_start_index:
-									range_lines[index]
 									if not range_lines[index].strip():
 										range_lines[index] = range_lines[index].strip()
 									elif range_lines[index].strip() in ['{','}']:
 										range_lines[index] = tabs + range_lines[index]
 									else:
-										range_lines[index] = tabs + whitespace + range_lines[index]
+										range_lines[index] = tabs + whitespace + range_lines[index].strip()
 						for line in reversed(range_lines): 
 							if line.strip():
 								break
