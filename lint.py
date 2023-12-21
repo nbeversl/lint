@@ -22,8 +22,15 @@ class UrtextLint:
 					self.run(filename)
 
 	def run(self, filename):
+		self.project.execute(
+			self._run,
+			filename)
+
+	def _run(self, filename):
 		self._get_settings()		
-		contents = self.project.run_editor_method('get_buffer', filename)
+		contents = self.project.run_editor_method(
+			'get_buffer', 
+			filename)
 		if not contents:
 			return
 		contents = '\n'.join(l for l in contents.split('\n'))
@@ -34,21 +41,21 @@ class UrtextLint:
 			if not buffer:
 				return
 
-			# calculate params for every range of the file
 			self._get_settings() # in case buffer is a project_settings node
+
 			mapped_ranges = {}
 			for node in buffer.nodes:
 				whitespace = 0
 				for r in node.ranges:
 					if node.nested > 0 and not node.is_meta:
-						if r == node.ranges[0]: # first range
+						if r == node.ranges[0]:
 							if node.compact:
 								r[0] = r[0] - 2 
 							else:
 								r[0] = r[0] - 1
 							first_line = contents[r[0]+1:r[1]].split('\n')[0]
 							whitespace = (len(first_line) - len(first_line.lstrip())) + 1
-						if r == node.ranges[-1]: # last range
+						if r == node.ranges[-1]:
 							if not node.compact:
 								r[1] = r[1] + 1
 					mapped_ranges[r[0]] = {
@@ -60,14 +67,12 @@ class UrtextLint:
 						'end' : r == node.ranges[-1] and (node.nested > 0)
 					}
 
-			# get settings
 			spaces_between_nodes = 1
 			if self.settings:
 				spaces_setting = self.settings.get_first_value('space_between_nodes')
 				if spaces_setting:
 					spaces_between_nodes = int(spaces_setting.num())
 
-			# rewrite the contents
 			new_contents = []
 			range_start_positions = sorted(list(mapped_ranges.keys()))
 			for position in range_start_positions:
@@ -91,7 +96,7 @@ class UrtextLint:
 										range_lines[index] = tabs + range_lines[index]
 									else:
 										range_lines[index] = tabs + whitespace + range_lines[index].strip()
-						for line in reversed(range_lines): 
+						for line in reversed(range_lines):
 							if line.strip():
 								break
 							range_lines.pop()
