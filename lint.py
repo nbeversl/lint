@@ -28,12 +28,11 @@ class UrtextLint:
 
 	def _run(self, filename):
 		self._get_settings()	
-		buffer = self.project._parse_file(
+		buffer, changed_ids = self.project._parse_file(
 			filename,
 			try_buffer=True)
 		if not buffer:
 			return
-
 		self._get_settings() # in case buffer is a project_settings node
 		mapped_ranges = {}
 		contents = buffer.contents
