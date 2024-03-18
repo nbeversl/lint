@@ -69,7 +69,7 @@ class UrtextLint:
 		range_start_positions = sorted(list(mapped_ranges.keys()))
 		for position in range_start_positions:
 			r = mapped_ranges[position]
-			if not r['is_meta']: # TODO implement meta nodes
+			if not r['is_meta']:
 				range_contents = contents[r['range'][0]:r['range'][1]]
 				range_lines = [l.strip() for l in range_contents.split('\n')]
 				if range_lines:
@@ -96,7 +96,7 @@ class UrtextLint:
 			else:
 				new_contents.append(
 					contents[
-					r['range'][0]-2
+					r['range'][0]-1
 					:
 					r['range'][1]+1])
 		new_contents = ''.join(new_contents)
