@@ -2,17 +2,13 @@ class UrtextLint:
 
 	name = ["LINT"]
 
-	def __init__(self, project):
-		super().__init__(project)
-		self._get_settings()
-
 	def _get_settings(self):		
 		self.settings = None
 		if '_lint' in self.project.settings:
 			if self.project.settings['_lint'] and self.project.settings['_lint'].is_node:
 				self.settings = self.project.settings['_lint'].metadata
 
-	def on_file_modified(self, filename):
+	def _old_on_file_modified(self, filename):
 		self._get_settings()
 		if self.settings:
 			lint_on_file_modified = self.settings.get_first_value(
@@ -21,20 +17,33 @@ class UrtextLint:
 				if lint_on_file_modified.true():
 					self.run(filename)
 
+	def on_set_file_contents(self, urtext_file):
+		self._get_settings()
+		if self.settings:
+			lint_on_file_modified = self.settings.get_first_value(
+				'run_when_file_modified')
+			if lint_on_file_modified != None and lint_on_file_modified.true():
+				urtext_file.contents = self.lint(urtext_file.filename, urtext_file.contents)
+
 	def run(self, filename):
 		self.project.execute(
 			self._run,
 			filename)
 
 	def _run(self, filename):
-		self._get_settings()	
+		self._get_settings()
 		buffer, changed_ids = self.project._parse_file(
 			filename,
 			try_buffer=True)
 		if not buffer:
 			return
 		self._get_settings() # in case buffer is a project_settings node
+
+	def lint(self, filename, buffer_contents):
 		mapped_ranges = {}
+		buffer = self.project.urtext_buffer(self.project, None, buffer_contents)
+		buffer.filename = filename
+		buffer.clear_messages_and_parse()
 		contents = buffer.contents
 		for node in buffer.nodes:
 			whitespace = 0
@@ -100,6 +109,6 @@ class UrtextLint:
 					:
 					r['range'][1]+1])
 		new_contents = ''.join(new_contents)
-		buffer._set_contents(new_contents)
+		return new_contents
 
 urtext_extensions = [UrtextLint]
