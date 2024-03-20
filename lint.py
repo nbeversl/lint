@@ -8,22 +8,24 @@ class UrtextLint:
 			if self.project.settings['_lint'] and self.project.settings['_lint'].is_node:
 				self.settings = self.project.settings['_lint'].metadata
 
-	def _old_on_file_modified(self, filename):
+	def _should_run(self):
 		self._get_settings()
 		if self.settings:
 			lint_on_file_modified = self.settings.get_first_value(
 				'run_when_file_modified')
 			if lint_on_file_modified != None:
 				if lint_on_file_modified.true():
-					self.run(filename)
+					return True
 
-	def on_set_file_contents(self, urtext_file):
-		self._get_settings()
-		if self.settings:
-			lint_on_file_modified = self.settings.get_first_value(
-				'run_when_file_modified')
-			if lint_on_file_modified != None and lint_on_file_modified.true():
-				urtext_file.contents = self.lint(urtext_file.filename, urtext_file.contents)
+	def on_file_modified(self, filename):
+		if self._should_run():
+			urtext_file = self.project.files[filename]
+			new_contents = self.lint(urtext_file.filename, urtext_file.contents)
+			urtext_file._set_contents(new_contents)
+					
+	def on_set_file_contents(self, urtext_file, new_contents):
+		if self._should_run():
+			urtext_file.contents = self.lint(urtext_file.filename, new_contents)
 
 	def run(self, filename):
 		self.project.execute(
