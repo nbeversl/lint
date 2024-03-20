@@ -21,11 +21,11 @@ class UrtextLint:
 		if self._should_run():
 			urtext_file = self.project.files[filename]
 			new_contents = self.lint(urtext_file.filename, urtext_file.contents)
-			urtext_file._set_contents(new_contents)
+			urtext_file._set_contents(new_contents, run_on_modified=False)
 					
-	def on_set_file_contents(self, urtext_file, new_contents):
+	def on_set_file_contents(self, urtext_file):
 		if self._should_run():
-			urtext_file.contents = self.lint(urtext_file.filename, new_contents)
+			urtext_file.contents = self.lint(urtext_file.filename, urtext_file.contents)
 
 	def run(self, filename):
 		self.project.execute(
