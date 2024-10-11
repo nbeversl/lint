@@ -71,7 +71,7 @@ class UrtextLint:
 		contents = urtext_buffer.contents
 		lines = self.re.split(''.join([
 			'(\n|\}|',
-			'(?:'+self.syntax.metadata_key+ '\:\:)?\{[^\S\r\n]*)']), contents)
+			'(?:'+self.syntax.metadata_key+ '\:\:)?\{[^\S\r\n]+?)']), contents)
 		length = 0
 		skip_lines = []
 		blank_lines = 0
@@ -79,6 +79,7 @@ class UrtextLint:
 
 		for index, l in enumerate(lines):
 			if index in skip_lines:
+				length += len(lines[index])
 				continue
 			if l == '':
 				continue
@@ -127,10 +128,8 @@ class UrtextLint:
 				if index < len(lines) - 2 and lines[index+1] and lines[index+1] != '{':
 					contents = l.strip() + (' ' * left_padding) + lines[index+1].strip() if node and not node.is_dynamic else l + lines[index+1]
 					skip_lines.append(index+1)
-					added_length = len(contents)
 				else:
 					contents = l.strip()
-					added_length = len(l)
 				if blank_lines > lines_between_nodes:
 					for back in range(len(separated_lines) - 2, 0, -1):
 						line = separated_lines[back]
@@ -155,7 +154,7 @@ class UrtextLint:
 					'padding': 0,
 					'dd': False,
 					})
-				length += added_length
+				length += len(l)
 				blank_lines = 0
 				continue
 
@@ -186,10 +185,8 @@ class UrtextLint:
 				if index < len(lines) - 2 and lines[index+1] and lines[index+1] != '{':
 					contents = l.lstrip() + lines[index+1]
 					skip_lines.append(index+1)
-					length += len(contents)
 				else:
 					contents = l.lstrip()
-					length += len(l)
 				if node and not node.is_meta:
 					nested = node.nested
 				else:
@@ -204,11 +201,12 @@ class UrtextLint:
 					'padding': (left_padding + 1) if nested > 0 else 0,
 					'dd': False,
 					})
+				length += len(l)
 				continue
 
 			elif l == '}':
 				blank_lines = 0
-				node = urtext_buffer.get_node_from_position(length)				
+				node = urtext_buffer.get_node_from_position(length + (len(l)) - 1)
 				if self.is_embedded_syntax(node, length):
 					separated_lines.append({
 					'contents': l,
