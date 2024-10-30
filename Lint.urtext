@@ -47,8 +47,7 @@ class UrtextLint:
 		buffer = self.project.files[filename]
 		linted_contents = self.lint(buffer)
 		buffer.set_buffer_contents(linted_contents)
-		buffer.write_buffer_contents()
-
+	
 	def lint(self, urtext_buffer):
 		urtext_buffer = self.project._parse_buffer(urtext_buffer)
 		lines_between_nodes = 2
@@ -81,8 +80,6 @@ class UrtextLint:
 			if index in skip_lines:
 				length += len(lines[index])
 				continue
-			if l == '':
-				continue
 			if l.strip() == '':
 				node = urtext_buffer.get_node_from_position(length)
 				if self.is_embedded_syntax(node, length):
@@ -101,16 +98,15 @@ class UrtextLint:
 						'embedded' : False,
 						'dd': True,
 						})
-				else:
-					if '\n' in l:
-						separated_lines.append({
-							'contents': '\n',
-							'nested': 0,
-							'padding': 0,
-							'embedded' : False,
-							'dd':False,
-							})
-						blank_lines += 1
+				elif '\n' in l:
+					separated_lines.append({
+						'contents': '\n',
+						'nested': 0,
+						'padding': 0,
+						'embedded' : False,
+						'dd':False,
+						})
+					blank_lines += 1
 				length += len(l)
 				continue
 			elif l[0] == '{':
@@ -138,7 +134,7 @@ class UrtextLint:
 						else: 
 							break
 				elif blank_lines < lines_between_nodes:
-					for i in range(blank_lines, lines_between_nodes):						
+					for i in range(blank_lines, lines_between_nodes):
 						separated_lines.append({
 							'contents': '\n',
 							'nested' : 0,
@@ -146,7 +142,14 @@ class UrtextLint:
 							'embedded' : False,
 							'dd': False,
 							})
-
+				elif len(separated_lines) and '\n' not in separated_lines[-1]['contents']:
+					separated_lines.append({
+						'contents': '\n',
+						'nested': 0,
+						'padding' : 0,
+						'embedded' : False,
+						'dd': False,
+						})
 				separated_lines.append({
 					'contents': contents,
 					'nested': node.nested if node else 0,
@@ -243,8 +246,16 @@ class UrtextLint:
 					 	nested = node.parent.nested
 					 else:
 					 	nested = 0
+				if len(separated_lines) and '\n' not in separated_lines[-1]['contents']:
+					separated_lines.append({
+						'contents': '\n',
+						'nested': 0,
+						'padding' : 0,
+						'embedded' : False,
+						'dd': False,
+						})
 				separated_lines.append({
-					'contents': l.strip() if node and not node.is_dynamic else l,
+					'contents': l.strip(),
 					'nested': nested,
 					'padding' : 0,
 					'embedded' : False,
@@ -300,8 +311,13 @@ class UrtextLint:
 				continue
 			contents = s['contents']
 			linted_line = ('\t' * s['nested']) + (' ' * s['padding']) + contents
-			linted_lines.append(linted_line)
-
+			if linted_line.strip() or s['embedded'] or s['dd']:
+				linted_lines.append(linted_line)
+				blank_lines = 0
+			else:
+				if blank_lines < lines_between_nodes:
+					linted_lines.append(linted_line)
+					blank_lines += 1
 		return ''.join(linted_lines)
 
 	def is_embedded_syntax(self, node, position):
